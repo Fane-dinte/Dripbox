@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dripbox</title>
+<meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141311" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.webmanifest">
+<script>try { const s = localStorage.getItem("dripbox-skin"); if (s && s !== "classic") document.documentElement.dataset.skin = s; } catch {}</script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+:root {
+  --bg: #f4f1ec; --card: #ffffff; --ink: #1c1a17; --muted: #75706a; --line: #e6e1d9;
+  --accent: #b5652b; --accent-ink: #ffffff; --accent-soft: #f6e7da; --danger: #b3261e;
+  --ok: #2f7d4f; --shadow: 0 1px 2px rgba(40,30,20,.06), 0 4px 16px rgba(40,30,20,.05);
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #141311; --card: #1d1b18; --ink: #f1ede6; --muted: #a29b91; --line: #2e2b27;
+    --accent: #e08a4a; --accent-ink: #1a120b; --accent-soft: #33251a; --danger: #f28b82; --ok: #7fc79a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4); }
+}
+/* black skins: same layout, black base, one accent */
+:root[data-skin] { --bg: #0a0a0b; --card: #141416; --ink: #f1f1f3; --muted: #8e8e98; --line: #26262b;
+  --danger: #ff6b6b; --ok: #5fd38d; --shadow: none; color-scheme: dark; }
+:root[data-skin="blue"] { --accent: #4d8dff; --accent-ink: #06101f; }
+:root[data-skin="white"] { --accent: #f2f2f2; --accent-ink: #0a0a0b; }
+:root[data-skin="purple"] { --accent: #a78bfa; --accent-ink: #140b2b; }
+:root[data-skin="orange"] { --accent: #fb923c; --accent-ink: #2a1203; }
+:root[data-skin="pink"] { --accent: #f472b6; --accent-ink: #2b0717; }
+:root[data-skin="red"] { --accent: #f2545b; --accent-ink: #2a0507; }
+:root[data-skin] { --accent-soft: color-mix(in srgb, var(--accent) 15%, var(--card)); }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+[hidden] { display: none !important; }
+
+/* header */
+header { display: flex; align-items: center; gap: 12px; padding: 6px 2px 14px; }
+.logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 20px; letter-spacing: -.01em; }
+.logo svg { width: 28px; height: 28px; color: var(--accent); }
+.meter { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.bar { width: 70px; height: 5px; border-radius: 9px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 9px; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 5px 11px 5px 9px; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.chip svg { width: 15px; height: 15px; color: var(--muted); }
+
+/* composer: attach | message | camera | send, like a chat app */
+.composer { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 8px; position: relative; }
+.cbar { display: flex; align-items: flex-end; gap: 4px; }
+.cbar textarea { flex: 1; min-width: 0; border: 0; outline: 0; resize: none; background: transparent; min-height: 40px; max-height: 40vh; padding: 9px 6px; font-size: 15.5px; line-height: 1.4; }
+.cbar textarea::placeholder { color: var(--muted); }
+.cbar .ib { width: 40px; height: 40px; flex: none; }
+.cbar .ib svg { width: 22px; height: 22px; }
+.sendbtn { width: 42px; height: 42px; flex: none; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.sendbtn svg { width: 20px; height: 20px; }
+.sendbtn:disabled { opacity: .4; cursor: default; }
+.under { display: flex; gap: 8px; padding: 2px 6px 0; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 8px 13px; display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14px; }
+.btn svg { width: 18px; height: 18px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.primary:disabled { opacity: .45; cursor: default; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+.row { display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+.hint { color: var(--muted); font-size: 12.5px; }
+
+/* picked files waiting to be sent (preview before sending) */
+.tray { padding: 4px 4px 8px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+.trayHead { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 0 2px 8px; }
+.trayHead button { border: 0; background: none; color: var(--muted); font-size: 13px; font-weight: 600; margin-left: auto; padding: 2px 4px; }
+.trayList { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.tItem { position: relative; width: 84px; height: 84px; flex: none; border-radius: 12px; overflow: hidden; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.tItem img, .tItem video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tItem .vid { position: absolute; left: 6px; bottom: 5px; background: rgba(0,0,0,.6); color: #fff; font-size: 10.5px; font-weight: 700; border-radius: 5px; padding: 1px 5px; }
+.tItem .nm { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 5px; font-size: 10px; font-weight: 600; color: var(--ink); background: color-mix(in srgb, var(--card) 85%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tItem .rm { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.62); color: #fff; display: grid; place-items: center; padding: 0; }
+.tItem .rm svg { width: 13px; height: 13px; }
+.tAdd { width: 84px; height: 84px; flex: none; border-radius: 12px; border: 1.5px dashed var(--line); background: transparent; color: var(--muted); display: grid; place-items: center; }
+.tAdd svg { width: 24px; height: 24px; }
+
+/* the attach menu */
+.sheet { position: absolute; left: 8px; top: calc(100% + 8px); z-index: 20; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.28); padding: 14px 16px; display: flex; gap: 18px; }
+.sheet button { border: 0; background: none; display: grid; justify-items: center; gap: 7px; font-size: 12.5px; color: var(--ink); padding: 0; min-width: 62px; }
+.sheet i { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+.sheet i svg { width: 25px; height: 25px; }
+.sheet .g i { background: #7c5cf6; }
+.sheet .c i { background: #e8457a; }
+.sheet .d i { background: #3a86f0; }
+
+.cap { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; margin-top: 2px; }
+.cap a { color: var(--accent); }
+
+/* uploads in progress */
+.jobs { margin-top: 12px; display: grid; gap: 8px; }
+.job { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.job .top { display: flex; gap: 10px; font-size: 13.5px; }
+.job .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.job .pct { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.job .track { margin-top: 8px; height: 4px; background: var(--line); border-radius: 9px; overflow: hidden; }
+.job .track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.job.err { border-color: var(--danger); }
+.job.err .pct { color: var(--danger); }
+.job button { border: 0; background: none; color: var(--muted); padding: 0 2px; }
+
+/* items */
+.list { margin-top: 18px; display: grid; gap: 8px; }
+.day { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin: 10px 4px 0; }
+.item { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; display: flex; gap: 12px; align-items: center; min-width: 0; }
+.item.fresh { animation: fresh 2.4s ease-out; }
+@keyframes fresh { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 3px transparent; } }
+.thumb { width: 52px; height: 52px; border-radius: 10px; flex: none; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 11.5px; letter-spacing: .03em; overflow: hidden; text-decoration: none; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.body { flex: 1; min-width: 0; }
+.fname { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; color: inherit; text-decoration: none; }
+.fname:hover { text-decoration: underline; }
+.meta { color: var(--muted); font-size: 12.5px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta .pin { color: var(--accent); font-weight: 600; }
+.acts { display: flex; gap: 2px; flex: none; }
+.ib { width: 36px; height: 36px; border: 0; background: transparent; border-radius: 9px; display: grid; place-items: center; color: var(--muted); }
+.ib:hover { background: var(--bg); color: var(--ink); }
+.ib svg { width: 19px; height: 19px; }
+.ib.on { color: var(--accent); }
+.ib.main { color: var(--accent); }
+.item.text { align-items: flex-start; }
+.item.text .thumb { height: 40px; }
+.txt { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 15px; max-height: 9.2em; overflow: hidden; position: relative; }
+.txt.open { max-height: none; }
+.txt a { color: var(--accent); }
+.more { border: 0; background: none; color: var(--accent); padding: 2px 0; font-size: 13px; font-weight: 600; }
+.empty { text-align: center; color: var(--muted); padding: 46px 20px; }
+.empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
+
+/* drag overlay */
+.drop { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(3px); display: grid; place-items: center; z-index: 30; pointer-events: none; }
+.drop div { border: 2.5px dashed var(--accent); border-radius: 22px; padding: 46px 60px; font-size: 19px; font-weight: 700; color: var(--accent); background: var(--card); }
+
+/* login */
+.login { min-height: 86vh; display: grid; place-items: center; }
+.login form { width: min(340px, 100%); text-align: center; }
+.login svg { width: 54px; height: 54px; color: var(--accent); }
+.login h1 { font-size: 24px; margin: 8px 0 4px; }
+.login p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+.field { width: 100%; border: 1px solid var(--line); background: var(--card); border-radius: 11px; padding: 12px 14px; outline: 0; font-size: 16px; }
+.field:focus { border-color: var(--accent); }
+.login .btn { width: 100%; justify-content: center; margin-top: 10px; padding: 12px; }
+.login .e { color: var(--danger); font-size: 13.5px; min-height: 20px; margin-top: 8px; }
+
+/* skin picker */
+.skins { display: flex; flex-wrap: wrap; gap: 9px; }
+.skins button { width: 34px; height: 34px; border-radius: 50%; padding: 0; cursor: pointer; border: 2px solid var(--card); outline: 1.5px solid var(--line); outline-offset: 1px;
+  background: radial-gradient(circle at 50% 50%, var(--c) 0 42%, #0a0a0b 44%); }
+.skins button[data-skin="classic"] { background: linear-gradient(135deg, #f4f1ec 50%, #b5652b 50%); }
+.skins button[aria-pressed="true"] { outline: 2.5px solid var(--ink); }
+.skins button:focus-visible { outline: 3px solid var(--accent); }
+.install { border: 1px solid transparent; background: var(--accent); color: var(--accent-ink); border-radius: 99px; padding: 5px 12px 5px 10px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.install svg { width: 15px; height: 15px; }
+.howto { font-size: 13px; color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+
+/* owner: logged-in devices */
+.sess { display: grid; gap: 8px; margin: 4px 0 0; max-height: 46vh; overflow: auto; }
+.sess .s { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 11px; padding: 9px 10px; }
+.sess .s > div { flex: 1; min-width: 0; }
+.sess b { display: block; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sess .tag { font-size: 11px; font-weight: 700; color: var(--accent); margin-left: 4px; }
+.sess .on { color: var(--ok); }
+.btn.danger { color: var(--danger); }
+.btn.small { padding: 6px 10px; font-size: 13px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+#adm { width: min(440px, calc(100vw - 32px)); }
+
+/* dialog + toast */
+dialog { border: 1px solid var(--line); border-radius: 18px; background: var(--card); color: var(--ink); padding: 18px; width: min(380px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog h2 { margin: 0 0 12px; font-size: 18px; }
+dialog label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+dialog .row { margin-top: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 11px; font-size: 14px; font-weight: 500; transition: .2s; z-index: 40; pointer-events: none; max-width: calc(100vw - 32px); }
+.toast.show { opacity: 1; transform: translateX(-50%); }
+
+@media (max-width: 560px) {
+  .wrap { padding: 12px 12px 40px; }
+  header { gap: 8px; }
+  .meter .of, .install span { display: none; }
+  .install { padding: 7px; }
+  .chip { max-width: 34vw; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meter .bar { display: none; }
+  .thumb { width: 46px; height: 46px; }
+  .ib { width: 34px; height: 34px; }
+  .acts .opt { display: none; }
+  .item { padding: 9px; gap: 10px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.9" y="2.9" width="18.2" height="18.2" rx="4.6"/><path d="M12 6.4c2.6 3.1 4.15 5.25 4.15 7.2a4.15 4.15 0 0 1-8.3 0c0-1.95 1.55-4.1 4.15-7.2z"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m20 11.5-7.8 7.8a5 5 0 0 1-7.1-7.1l8.3-8.3a3.4 3.4 0 0 1 4.8 4.8l-8.2 8.2a1.7 1.7 0 0 1-2.4-2.4l7.4-7.4"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2.2h5.6L16.3 7h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.4"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="m4 17.5 5-4.6 3.5 3 3-2.6 4.5 4.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 3.5h6.5L18.5 8.5V19A1.5 1.5 0 0 1 17 20.5H7A1.5 1.5 0 0 1 5.5 19V5A1.5 1.5 0 0 1 7 3.5z"/><path d="M13.5 3.5v5h5M8.5 13h7M8.5 16.5h5" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 12 20 4l-5.5 16-3.2-6.8z"/><path d="m11.3 13.2 8.7-9.2"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3z"/><path d="M12 14v6" stroke-linecap="round"/></symbol>
+  <symbol id="i-pin-on" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3z"/><path d="M12 14v6" stroke-linecap="round" fill="none"/></symbol>
+  <symbol id="i-del" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></symbol>
+  <symbol id="i-dev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="12" height="9" rx="1.5"/><rect x="16" y="8" width="5" height="11" rx="1.2"/><path d="M6 18h7" stroke-linecap="round"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+</svg>
+
+<div id="login" class="wrap login" hidden>
+  <form id="loginForm" autocomplete="on">
+    <svg><use href="#i-box"/></svg>
+    <h1>Dripbox</h1>
+    <p>Fișierele tale, pe toate dispozitivele.</p>
+    <input class="field" id="pass" type="password" name="password" autocomplete="current-password" placeholder="Parola" required>
+    <button class="btn primary" type="submit">Intră</button>
+    <div class="e" id="loginErr"></div>
+  </form>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <div class="logo"><svg><use href="#i-box"/></svg>Dripbox</div>
+    <div class="meter" id="meter"></div>
+    <button class="install" id="installBtn" type="button" hidden><svg><use href="#i-down"/></svg><span>Instalează</span></button>
+    <button class="chip" id="devBtn" type="button" title="Setări"><svg><use href="#i-dev"/></svg><span id="devName"></span></button>
+  </header>
+
+  <div class="composer" id="composer">
+    <div class="tray" id="tray" hidden>
+      <div class="trayHead"><span id="trayInfo"></span><button type="button" id="trayClear">Renunță</button></div>
+      <div class="trayList" id="trayList"></div>
+    </div>
+    <div class="cbar">
+      <button class="ib" id="attach" type="button" title="Atașează" aria-haspopup="true" aria-expanded="false"><svg><use href="#i-clip"/></svg></button>
+      <textarea id="msg" rows="1" placeholder="Scrie, lipește un link sau trage fișiere aici…"></textarea>
+      <button class="ib" id="cam" type="button" title="Fă o poză"><svg><use href="#i-cam"/></svg></button>
+      <button class="sendbtn" id="send" type="button" title="Trimite" disabled><svg><use href="#i-send"/></svg></button>
+    </div>
+    <div class="under" id="kbdHint"><span class="hint">Enter trimite · Ctrl+V lipește și poze</span></div>
+    <div class="sheet" id="sheet" hidden>
+      <button type="button" class="g" id="optGal"><i><svg><use href="#i-img"/></svg></i>Galerie</button>
+      <button type="button" class="c" id="optCam"><i><svg><use href="#i-cam"/></svg></i>Cameră</button>
+      <button type="button" class="d" id="optDoc"><i><svg><use href="#i-doc"/></svg></i>Document</button>
+    </div>
+    <input type="file" id="inGal" accept="image/*,video/*" multiple hidden>
+    <input type="file" id="inCam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="inDoc" multiple hidden>
+  </div>
+
+  <div class="jobs" id="jobs"></div>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="drop" id="drop" hidden><div>Lasă fișierele aici</div></div>
+
+<dialog id="dlg">
+  <h2>Setări</h2>
+  <label for="devInput">Numele acestui dispozitiv</label>
+  <input class="field" id="devInput" maxlength="30">
+  <label>Temă</label>
+  <div class="skins" id="skins">
+    <button type="button" data-skin="classic" aria-label="Clasic (deschis/închis după sistem)" title="Clasic"></button>
+    <button type="button" data-skin="blue" style="--c:#4d8dff" aria-label="Negru cu albastru" title="Albastru"></button>
+    <button type="button" data-skin="white" style="--c:#f2f2f2" aria-label="Negru cu alb" title="Alb"></button>
+    <button type="button" data-skin="purple" style="--c:#a78bfa" aria-label="Negru cu mov" title="Mov"></button>
+    <button type="button" data-skin="orange" style="--c:#fb923c" aria-label="Negru cu portocaliu" title="Portocaliu"></button>
+    <button type="button" data-skin="pink" style="--c:#f472b6" aria-label="Negru cu roz" title="Roz"></button>
+    <button type="button" data-skin="red" style="--c:#f2545b" aria-label="Negru cu roșu" title="Roșu"></button>
+  </div>
+  <div id="installBox">
+    <label>Aplicație</label>
+    <button class="btn" id="installBtn2" type="button"><svg><use href="#i-down"/></svg>Instalează Dripbox</button>
+    <p class="howto" id="howto"></p>
+  </div>
+  <div id="ownerBox" hidden>
+    <label>Proprietar</label>
+    <button class="btn" id="admBtn" type="button"><svg><use href="#i-dev"/></svg>Dispozitive conectate</button>
+  </div>
+  <p class="hint" id="info" style="margin:14px 0 0"></p>
+  <div class="row">
+    <button class="btn ghost" id="logout" type="button">Ieși de pe acest dispozitiv</button>
+    <span class="spacer"></span>
+    <button class="btn primary" id="dlgOk" type="button">Gata</button>
+  </div>
+</dialog>
+<dialog id="adm">
+  <h2>Dispozitive conectate</h2>
+  <p class="hint" style="margin:0 0 10px">Doar tu vezi asta. Un dispozitiv scos ajunge la ecranul de parolă în câteva secunde.</p>
+  <div class="sess" id="sessList"></div>
+  <div class="row" style="margin-top:12px">
+    <button class="btn danger small" id="kickAll" type="button">Scoate-i pe toți ceilalți</button>
+  </div>
+  <label for="newPass">Parola pentru ceilalți</label>
+  <input class="field" id="newPass" type="password" autocomplete="new-password" placeholder="Parolă nouă (minim 8 caractere)">
+  <label class="check"><input type="checkbox" id="newPassKick" checked> Scoate-i pe toți ceilalți după schimbare</label>
+  <p class="hint" id="passInfo" style="margin:8px 0 0">Cine a fost scos poate intra din nou dacă știe parola. Ca să nu mai poată, schimb-o aici și dă-o doar celor care rămân.</p>
+  <div class="row">
+    <button class="btn" id="setPass" type="button">Schimbă parola</button>
+    <span class="spacer"></span>
+    <button class="btn primary" id="admOk" type="button">Gata</button>
+  </div>
+</dialog>
+<dialog id="cp">
+  <h2>Copiază</h2>
+  <p class="hint" id="cpLabel" style="margin:0 0 8px"></p>
+  <textarea class="field" id="cpText" rows="3" readonly style="resize:none;font-size:14px"></textarea>
+  <div class="row"><span class="spacer"></span><button class="btn primary" id="cpOk" type="button">Gata</button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ls = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const touch = matchMedia("(pointer: coarse)").matches;
+
+function guessDevice() {
+  const u = navigator.userAgent;
+  if (/Android/i.test(u)) return "Telefon";
+  if (/iPhone|iPad/i.test(u)) return "iPhone";
+  if (/Windows/i.test(u)) return "PC";
+  if (/Mac/i.test(u)) return "Mac";
+  if (/Linux/i.test(u)) return "Laptop";
+  return "Dispozitiv";
+}
+let device = ls.get("dripbox-dev") || guessDevice();
+$("#devName").textContent = device;
+if (touch) { $("#kbdHint").hidden = true; $("#msg").placeholder = "Mesaj"; } else { $("#cam").hidden = true; $("#optCam").hidden = true; }
+
+const S = { items: [], etag: null, used: 0, limit: 0, ttl: 30, part: 50 * 1048576, small: 95 * 1048576, seen: null, mine: new Set(), booted: false };
+
+function toast(t, ms = 2200) {
+  const el = $("#toast");
+  el.textContent = t;
+  el.classList.add("show");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove("show"), ms);
+}
+function fmtSize(n) {
+  if (n < 1024) return n + " B";
+  const u = ["KB", "MB", "GB"];
+  let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < 2);
+  return (n >= 100 ? Math.round(n) : n.toFixed(1)).toString().replace(".", ",") + " " + u[i];
+}
+function ago(t) {
+  const s = (Date.now() - t) / 1000;
+  if (s < 50) return "acum";
+  if (s < 3600) return "acum " + Math.round(s / 60) + " min";
+  const d = new Date(t);
+  const hm = d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+  return hm;
+}
+function dayLabel(t) {
+  const d = new Date(t), n = new Date();
+  const k = (x) => x.getFullYear() * 400 + x.getMonth() * 32 + x.getDate();
+  if (k(d) === k(n)) return "Azi";
+  const y = new Date(n); y.setDate(n.getDate() - 1);
+  if (k(d) === k(y)) return "Ieri";
+  return d.toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" });
+}
+function extOf(n) { const m = /\.([a-z0-9]{1,5})$/i.exec(n || ""); return m ? m[1].toUpperCase() : "FIȘ"; }
+function linkify(t) {
+  return esc(t).replace(/\bhttps?:\/\/[^\s<>"']+/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+}
+const fileUrl = (x, dl) => `/f/${x.id}/${encodeURIComponent(x.n)}${dl ? "?dl=1" : ""}`;
+
+async function api(path, opt = {}) {
+  const r = await fetch(path, { cache: "no-store", ...opt, headers: { "x-dev": encodeURIComponent(device), ...(opt.headers || {}) } });
+  if (r.status === 401) { showLogin(); throw new Error("auth"); }
+  if (r.status === 304) return null;
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Eroare " + r.status);
+  return j;
+}
+
+// ---------- rendering
+function render() {
+  const mt = $("#meter");
+  const pct = S.limit ? Math.min(100, (S.used / S.limit) * 100) : 0;
+  mt.innerHTML = `<span>${fmtSize(S.used)}<span class="of"> din ${Math.round(S.limit / 1024 ** 3)} GB</span></span><span class="bar"><i style="width:${pct}%"></i></span>`;
+  const list = $("#list");
+  if (!S.items.length) {
+    list.innerHTML = `<div class="empty"><b>Cutia e goală</b>Trimite ceva de aici sau de pe alt dispozitiv și apare imediat peste tot.</div>`;
+    return;
+  }
+  let html = "", last = "";
+  for (const x of S.items) {
+    const dl = dayLabel(x.at);
+    if (dl !== last) { html += `<div class="day">${esc(dl)}</div>`; last = dl; }
+    const left = S.ttl && !x.pin ? Math.ceil((x.at + S.ttl * 864e5 - Date.now()) / 864e5) : null;
+    const exp = left != null && left <= 3 ? ` · se șterge ${left <= 1 ? "mâine" : "în " + left + " zile"}` : "";
+    const who = x.from ? ` · ${esc(x.from)}` : "";
+    const pin = x.pin ? ` · <span class="pin">fixat</span>` : "";
+    const pinBtn = `<button class="ib opt ${x.pin ? "on" : ""}" data-a="pin" title="${x.pin ? "Anulează fixarea" : "Fixează (nu se mai șterge automat)"}"><svg><use href="#i-pin${x.pin ? "-on" : ""}"/></svg></button>`;
+    const delBtn = `<button class="ib" data-a="del" title="Șterge"><svg><use href="#i-del"/></svg></button>`;
+    if (x.k === "t") {
+      const long = x.text.length > 420 || x.text.split("\n").length > 7;
+      html += `<div class="item text" data-id="${x.id}">
+        <div class="thumb"><svg width="20" height="20"><use href="#i-text"/></svg></div>
+        <div class="body"><div class="txt">${linkify(x.text)}</div>${long ? `<button class="more" data-a="more">mai mult</button>` : ""}
+          <div class="meta">${ago(x.at)}${who}${pin}${exp}</div></div>
+        <div class="acts"><button class="ib main" data-a="copy" title="Copiază"><svg><use href="#i-copy"/></svg></button>${pinBtn}${delBtn}</div></div>`;
+    } else {
+      const img = /^image\/(png|jpe?g|gif|webp|avif|bmp)$/i.test(x.m || "");
+      const thumb = img ? `<img src="${fileUrl(x)}" loading="lazy" alt="">` : esc(extOf(x.n));
+      html += `<div class="item" data-id="${x.id}">
+        <a class="thumb" href="${fileUrl(x)}" target="_blank" rel="noopener">${thumb}</a>
+        <div class="body"><a class="fname" href="${fileUrl(x)}" target="_blank" rel="noopener" title="${esc(x.n)}">${esc(x.n)}</a>
+          ${x.c ? `<div class="cap">${linkify(x.c)}</div>` : ""}<div class="meta">${fmtSize(x.s)} · ${ago(x.at)}${who}${pin}${exp}</div></div>
+        <div class="acts">${img ? `<button class="ib main" data-a="cimg" title="Copiază imaginea"><svg><use href="#i-copy"/></svg></button>` : ""}<a class="ib main" href="${fileUrl(x, true)}" download="${esc(x.n)}" title="Descarcă"><svg><use href="#i-down"/></svg></a>
+          <button class="ib" data-a="link" title="Link de trimis altcuiva (7 zile)"><svg><use href="#i-link"/></svg></button>${pinBtn}${delBtn}</div></div>`;
+    }
+  }
+  list.innerHTML = html;
+  for (const id of S.fresh || []) list.querySelector(`[data-id="${id}"]`)?.classList.add("fresh");
+  S.fresh = [];
+}
+
+// ---------- sync
+let polling = false;
+async function refresh() {
+  if (polling) return;
+  polling = true;
+  try {
+    const r = await fetch("/api/list", { cache: "no-store", headers: { "x-dev": encodeURIComponent(device), ...(S.etag ? { "if-none-match": S.etag } : {}) } });
+    if (r.status === 401) { showLogin(); return; }
+    if (r.status === 304 || !r.ok) return;
+    const j = await r.json();
+    // remember the list's ETag so an unchanged list costs almost nothing
+    S.etag = r.headers.get("etag");
+    const before = new Set(S.items.map((x) => x.id));
+    Object.assign(S, { items: j.items, used: j.used, limit: j.limit, ttl: j.ttl, part: j.part || S.part, small: j.small || S.small, ops: j.ops || 0, opsCap: j.opsCap || 0 });
+    if (S.booted) {
+      S.fresh = j.items.filter((x) => !before.has(x.id) && !S.mine.has(x.id)).map((x) => x.id);
+      if (S.fresh.length && document.hidden) document.title = "● Dripbox";
+    }
+    S.booted = true;
+    render();
+  } catch (e) {
+    console.warn(e);
+  } finally { polling = false; }
+}
+// check every 4 s while you're using it, every 30 s once you've left it alone, never in a hidden tab
+let lastInput = Date.now(), lastPoll = 0;
+for (const ev of ["pointerdown", "keydown", "focus", "touchstart"]) addEventListener(ev, () => { lastInput = Date.now(); }, { passive: true });
+setInterval(() => {
+  if (document.hidden || $("#app").hidden) return;
+  const every = Date.now() - lastInput > 5 * 60e3 ? 30e3 : 4e3;
+  if (Date.now() - lastPoll >= every - 200) { lastPoll = Date.now(); refresh(); }
+}, 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { document.title = "Dripbox"; refresh(); } });
+
+// ---------- the composer: text, and picked files shown first (like a chat app) and sent together
+const msg = $("#msg");
+const tray = [];   // {file, url}
+function canSend() { return !!msg.value.trim() || tray.length > 0; }
+function autosize() { msg.style.height = "auto"; msg.style.height = Math.min(msg.scrollHeight, innerHeight * 0.4) + "px"; $("#send").disabled = !canSend(); }
+msg.addEventListener("input", autosize);
+msg.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !touch) { e.preventDefault(); sendAll(); }
+});
+$("#send").addEventListener("click", sendAll);
+function renderTray() {
+  $("#tray").hidden = !tray.length;
+  const total = tray.reduce((s, t) => s + t.file.size, 0);
+  $("#trayInfo").textContent = tray.length ? `${tray.length} ${tray.length === 1 ? "fișier" : "fișiere"} · ${fmtSize(total)}` : "";
+  $("#trayList").innerHTML = tray.map((t, i) => {
+    const f = t.file;
+    const inner = /^image\//.test(f.type) && !/heic|heif/i.test(f.type) ? `<img src="${t.url}" alt="">`
+      : /^video\//.test(f.type) ? `<video src="${t.url}#t=0.1" muted preload="metadata"></video><span class="vid">VIDEO</span>`
+      : `${esc(extOf(f.name))}<span class="nm">${esc(f.name)}</span>`;
+    return `<div class="tItem" title="${esc(f.name)} · ${fmtSize(f.size)}">${inner}<button class="rm" type="button" data-rm="${i}" aria-label="Scoate ${esc(f.name)}"><svg><use href="#i-x"/></svg></button></div>`;
+  }).join("") + (tray.length ? `<button class="tAdd" type="button" id="trayMore" aria-label="Mai adaugă"><svg><use href="#i-plus"/></svg></button>` : "");
+  msg.placeholder = tray.length ? "Adaugă o descriere…" : (touch ? "Mesaj" : "Scrie, lipește un link sau trage fișiere aici…");
+  autosize();
+}
+function addToTray(files) {
+  for (const f of files) if (f && f.size >= 0) tray.push({ file: f, url: URL.createObjectURL(f) });
+  renderTray();
+  if (!touch) msg.focus();
+}
+function clearTray() { tray.splice(0).forEach((t) => URL.revokeObjectURL(t.url)); renderTray(); }
+$("#trayClear").onclick = clearTray;
+$("#trayList").addEventListener("click", (e) => {
+  const rm = e.target.closest("[data-rm]");
+  if (rm) { const [t] = tray.splice(Number(rm.dataset.rm), 1); URL.revokeObjectURL(t.url); renderTray(); return; }
+  if (e.target.closest("#trayMore")) openSheet();
+});
+async function sendAll() {
+  if (!canSend()) return;
+  const text = msg.value.trim() ? msg.value : "";
+  const files = tray.map((t) => t.file);
+  clearTray();
+  msg.value = "";
+  autosize();
+  if (files.length) {
+    // the text goes with the first file as its caption
+    uploadAll(files, text);
+    return;
+  }
+  $("#send").disabled = true;
+  try {
+    const x = await api("/api/text", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, from: device }) });
+    S.mine.add(x.id);
+    refresh();
+  } catch (e) { if (e.message !== "auth") { toast(e.message); msg.value = text; } }
+  autosize();
+}
+
+// attach menu: gallery (the phone's photo picker), camera, any file
+function openSheet() { $("#sheet").hidden = false; $("#attach").setAttribute("aria-expanded", "true"); }
+function closeSheet() { $("#sheet").hidden = true; $("#attach").setAttribute("aria-expanded", "false"); }
+$("#attach").onclick = (e) => { e.stopPropagation(); $("#sheet").hidden ? openSheet() : closeSheet(); };
+document.addEventListener("click", (e) => { if (!$("#sheet").hidden && !e.target.closest("#sheet") && !e.target.closest("#attach") && !e.target.closest("#trayMore")) closeSheet(); });
+addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+$("#optGal").onclick = () => { closeSheet(); $("#inGal").click(); };
+$("#optCam").onclick = () => { closeSheet(); $("#inCam").click(); };
+$("#optDoc").onclick = () => { closeSheet(); $("#inDoc").click(); };
+$("#cam").onclick = () => $("#inCam").click();
+for (const id of ["#inGal", "#inCam", "#inDoc"]) $(id).onchange = (e) => { addToTray([...e.target.files]); e.target.value = ""; };
+
+// ---------- uploading files
+const jobsEl = $("#jobs");
+function mkJob(file) {
+  const el = document.createElement("div");
+  el.className = "job";
+  el.innerHTML = `<div class="top"><span class="name">${esc(file.name)}</span><span class="pct">0%</span><button title="Anulează"><svg width="16" height="16"><use href="#i-x"/></svg></button></div><div class="track"><i></i></div>`;
+  jobsEl.prepend(el);
+  const job = { el, xhrs: new Set(), cancelled: false, t0: performance.now(), loaded: 0, size: file.size };
+  el.querySelector("button").onclick = () => { job.cancelled = true; job.xhrs.forEach((x) => x.abort()); el.remove(); };
+  job.set = (loaded) => {
+    job.loaded = loaded;
+    const p = job.size ? Math.min(100, (loaded / job.size) * 100) : 100;
+    const secs = (performance.now() - job.t0) / 1000;
+    const speed = secs > 0.8 ? ` · ${fmtSize(loaded / secs)}/s` : "";
+    el.querySelector("i").style.width = p + "%";
+    el.querySelector(".pct").textContent = `${Math.floor(p)}% din ${fmtSize(job.size)}${speed}`;
+  };
+  job.fail = (m) => { el.classList.add("err"); el.querySelector(".pct").textContent = m; setTimeout(() => el.remove(), 8000); };
+  return job;
+}
+function xput(job, url, body, onProgress) {
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    job.xhrs.add(x);
+    x.open("PUT", url);
+    x.upload.onprogress = (e) => onProgress(e.loaded);
+    x.onload = () => {
+      job.xhrs.delete(x);
+      if (x.status === 401) { showLogin(); return rej(new Error("auth")); }
+      let j = {};
+      try { j = JSON.parse(x.responseText); } catch {}
+      x.status < 300 ? res(j) : rej(new Error(j.error || "Eroare " + x.status));
+    };
+    x.onerror = () => { job.xhrs.delete(x); rej(new Error("Conexiune întreruptă")); };
+    x.onabort = () => { job.xhrs.delete(x); rej(new Error("anulat")); };
+    x.send(body);
+  });
+}
+async function upload(file, cap = "") {
+  if (S.limit && S.used + file.size > S.limit) { toast("Nu mai e loc: șterge ceva întâi."); return; }
+  const job = mkJob(file);
+  const type = file.type || "application/octet-stream";
+  try {
+    let item;
+    if (file.size <= S.small) {
+      const q = new URLSearchParams({ name: file.name, type, from: device, size: file.size });
+      if (cap) q.set("cap", cap.slice(0, 1000));
+      item = await xput(job, "/api/up?" + q, file, (l) => job.set(l));
+    } else {
+      const st = await api("/api/mpu/start", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: file.name, type, size: file.size }) });
+      const part = st.part, n = Math.ceil(file.size / part), done = new Array(n).fill(0), parts = [];
+      let next = 0;
+      const worker = async () => {
+        while (next < n && !job.cancelled) {
+          const i = next++;
+          const blob = file.slice(i * part, Math.min(file.size, (i + 1) * part));
+          for (let tries = 0; ; tries++) {
+            try {
+              const q = new URLSearchParams({ id: st.id, uploadId: st.uploadId, n: i + 1 });
+              const r = await xput(job, "/api/mpu/part?" + q, blob, (l) => { done[i] = l; job.set(done.reduce((a, b) => a + b, 0)); });
+              parts[i] = { partNumber: r.partNumber, etag: r.etag };
+              done[i] = blob.size;
+              break;
+            } catch (e) {
+              if (job.cancelled || e.message === "auth" || tries >= 3) throw e;
+              await new Promise((r) => setTimeout(r, 1500 * (tries + 1)));
+            }
+          }
+        }
+      };
+      try {
+        await Promise.all([worker(), worker(), worker()]);
+      } catch (e) {
+        api("/api/mpu/abort", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: st.id, uploadId: st.uploadId }) }).catch(() => {});
+        throw e;
+      }
+      if (job.cancelled) throw new Error("anulat");
+      item = await api("/api/mpu/done", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: st.id, uploadId: st.uploadId, parts, name: file.name, type, size: file.size, from: device, cap }) });
+    }
+    S.mine.add(item.id);
+    job.el.remove();
+    refresh();
+  } catch (e) {
+    if (e.message === "anulat" || job.cancelled) return;
+    if (e.message !== "auth") job.fail(e.message);
+  }
+}
+function uploadAll(files, cap = "") {
+  const list = [...files].filter((f) => f && f.size >= 0);
+  // a few at a time: each big file already runs 3 parts in parallel
+  let i = 0;
+  const run = async () => { while (i < list.length) { const k = i++; await upload(list[k], k === 0 ? cap : ""); } };
+  run(); run();
+}
+document.addEventListener("paste", (e) => {
+  if ($("#app").hidden) return;
+  const files = [...(e.clipboardData?.files || [])];
+  if (files.length) { e.preventDefault(); addToTray(files.map((f, i) => f.name === "image.png" ? new File([f], `captura-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}${i ? "-" + i : ""}.png`, { type: f.type }) : f)); }
+});
+let dragDepth = 0;
+addEventListener("dragenter", (e) => { if ([...e.dataTransfer.types].includes("Files")) { dragDepth++; $("#drop").hidden = false; } });
+addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("#drop").hidden = true; } });
+addEventListener("dragover", (e) => e.preventDefault());
+addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; $("#drop").hidden = true; if (e.dataTransfer.files.length && !$("#app").hidden) addToTray([...e.dataTransfer.files]); });
+
+// ---------- copying text: the clipboard API, then the old copy command, then a box to copy by hand
+async function copyText(text, label) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    if (ok) return true;
+  } catch {}
+  $("#cpLabel").textContent = (label || "Textul") + " nu s-a putut copia automat în browserul ăsta. Ține apăsat sau Ctrl+C:";
+  $("#cpText").value = text;
+  $("#cp").showModal();
+  $("#cpText").focus(); $("#cpText").select();
+  return false;
+}
+
+// ---------- item actions
+$("#list").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-a]");
+  if (!b) return;
+  const el = b.closest("[data-id]"), id = el.dataset.id, x = S.items.find((i) => i.id === id);
+  const a = b.dataset.a;
+  try {
+    if (a === "more") { el.querySelector(".txt").classList.toggle("open"); b.textContent = el.querySelector(".txt.open") ? "mai puțin" : "mai mult"; }
+    if (a === "copy") { if (await copyText(x.text)) toast("Copiat"); }
+    if (a === "cimg") {
+      if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("Browserul ăsta nu poate copia imagini. Folosește Descarcă.");
+      // the clipboard takes PNG everywhere; other formats are converted first
+      const png = (async () => {
+        const blob = await (await fetch(fileUrl(x))).blob();
+        if (blob.type === "image/png") return blob;
+        const bmp = await createImageBitmap(blob);
+        const c = document.createElement("canvas");
+        c.width = bmp.width; c.height = bmp.height;
+        c.getContext("2d").drawImage(bmp, 0, 0);
+        return await new Promise((r) => c.toBlob(r, "image/png"));
+      })();
+      b.disabled = true;
+      try { await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]); toast("Imagine copiată"); }
+      catch { throw new Error("Browserul ăsta nu lasă paginile să copieze imagini. În Chrome, Edge sau în aplicația instalată merge; aici folosește Descarcă."); }
+      finally { b.disabled = false; }
+    }
+    if (a === "del") {
+      el.style.opacity = ".4";
+      await api("/api/item/" + id, { method: "DELETE" });
+      S.items = S.items.filter((i) => i.id !== id);
+      render(); refresh();
+    }
+    if (a === "pin") { await api("/api/item/" + id, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: !x.pin }) }); x.pin = !x.pin; render(); }
+    if (a === "link") {
+      const j = await api("/api/link/" + id, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ days: 7 }) });
+      if (touch && navigator.share) { await navigator.share({ title: x.n, url: j.url }).catch(() => {}); }
+      else if (await copyText(j.url, "Linkul (merge 7 zile, fără parolă)")) toast("Link copiat · merge 7 zile, fără parolă");
+    }
+  } catch (err) { if (err.message !== "auth") toast(err.message); }
+});
+
+// ---------- settings
+$("#devBtn").onclick = () => {
+  $("#devInput").value = device;
+  const days = S.ttl ? `Ce nu fixezi se șterge singur după ${S.ttl} zile.` : "Nimic nu se șterge automat.";
+  $("#info").textContent = `${days} Spațiu: ${fmtSize(S.used)} din ${Math.round(S.limit / 1024 ** 3)} GB. Scrieri luna asta: ${(S.ops || 0).toLocaleString("ro-RO")} din ${(S.opsCap || 0).toLocaleString("ro-RO")}. Peste limite, Dripbox refuză încărcările în loc să coste ceva.`;
+  $("#dlg").showModal();
+};
+$("#dlgOk").onclick = () => {
+  const v = $("#devInput").value.trim();
+  if (v) { device = v; ls.set("dripbox-dev", v); $("#devName").textContent = v; }
+  $("#dlg").close();
+};
+$("#logout").onclick = async () => { await fetch("/api/logout", { method: "POST" }); location.reload(); };
+
+// ---------- themes
+function setSkin(s) {
+  if (s && s !== "classic") document.documentElement.dataset.skin = s;
+  else delete document.documentElement.dataset.skin;
+  ls.set("dripbox-skin", s || "classic");
+  document.querySelectorAll("#skins button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.skin === (s || "classic"))));
+  // the phone's status bar follows the page background
+  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", bg));
+}
+$("#skins").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setSkin(b.dataset.skin); });
+setSkin(ls.get("dripbox-skin") || "classic");
+
+// ---------- install as an app
+let installEvt = null;
+const installed = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function installUI() {
+  $("#installBtn").hidden = !installEvt || installed();
+  $("#installBox").hidden = installed();
+  const ua = navigator.userAgent;
+  let how = "";
+  if (installEvt) how = "Apare ca aplicație separată, cu iconiță proprie." + (/Android/i.test(ua) ? " După instalare, Dripbox apare și în meniul Distribuie (Share) al telefonului." : "");
+  else if (/iPhone|iPad/i.test(ua)) how = "Pe iPhone: în Safari apasă Partajează (pătratul cu săgeată), apoi „Adaugă pe ecranul principal”.";
+  else if (/Android/i.test(ua)) how = "În Chrome: meniul ⋮ → „Instalează aplicația” (sau „Adaugă pe ecranul de pornire”). După instalare, Dripbox apare și în meniul Distribuie.";
+  else if (/Firefox/i.test(ua)) how = "Firefox pe calculator nu instalează aplicații web. Deschide Dripbox în Chrome sau Edge și apasă iconița de instalare din bara de adrese.";
+  else how = "În Chrome sau Edge: iconița de instalare din dreapta barei de adrese (sau meniul ⋮ → „Instalează Dripbox”).";
+  $("#howto").textContent = how;
+  $("#installBtn2").hidden = !installEvt;
+}
+addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; installUI(); });
+addEventListener("appinstalled", () => { installEvt = null; installUI(); toast("Dripbox e instalat"); });
+async function doInstall() {
+  if (!installEvt) { $("#devBtn").click(); return; }
+  installEvt.prompt();
+  const r = await installEvt.userChoice.catch(() => null);
+  if (r && r.outcome === "accepted") installEvt = null;
+  installUI();
+}
+$("#installBtn").onclick = doInstall;
+$("#installBtn2").onclick = doInstall;
+installUI();
+
+// ---------- owner: logged-in devices
+function seenText(t) {
+  const s = (Date.now() - t) / 1000;
+  if (s < 15 * 60) return '<span class="on">activ acum</span>';
+  if (s < 3600) return "văzut acum " + Math.round(s / 60) + " min";
+  if (s < 86400) return "văzut acum " + Math.round(s / 3600) + " h";
+  return "văzut acum " + Math.round(s / 86400) + " zile";
+}
+async function loadSessions() {
+  const j = await api("/api/admin/sessions");
+  const list = $("#sessList");
+  list.innerHTML = j.sessions.map((x) => `<div class="s" data-sid="${esc(x.id)}">
+      <div><b>${esc(x.dev || "Dispozitiv")}${x.me ? '<span class="tag">ACESTA</span>' : ""}${x.admin ? '<span class="tag">PROPRIETAR</span>' : ""}</b>
+      <small>${esc(x.ua || "")}${x.where ? " · " + esc(x.where) : ""}</small>
+      <small>${seenText(x.seen || x.at)} · intrat ${new Date(x.at).toLocaleDateString("ro-RO", { day: "numeric", month: "short" })}</small></div>
+      ${x.me ? "" : '<button class="btn danger small" data-kick type="button">Scoate</button>'}
+    </div>`).join("") || '<p class="hint">Niciun dispozitiv.</p>';
+  $("#kickAll").hidden = j.sessions.filter((x) => !x.me).length === 0;
+}
+$("#admBtn").onclick = async () => {
+  $("#dlg").close();
+  $("#sessList").innerHTML = '<p class="hint">Se încarcă…</p>';
+  $("#adm").showModal();
+  try { await loadSessions(); } catch (e) { if (e.message !== "auth") toast(e.message); }
+};
+$("#admOk").onclick = () => $("#adm").close();
+$("#cpOk").onclick = () => $("#cp").close();
+$("#sessList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-kick]");
+  if (!b) return;
+  const row = b.closest("[data-sid]");
+  b.disabled = true;
+  try { await api("/api/admin/sessions/" + row.dataset.sid, { method: "DELETE" }); row.remove(); toast("Scos"); }
+  catch (err) { b.disabled = false; if (err.message !== "auth") toast(err.message); }
+});
+$("#kickAll").onclick = async () => {
+  const b = $("#kickAll");
+  if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Sigur? Apasă din nou"; setTimeout(() => { b.dataset.sure = ""; b.textContent = "Scoate-i pe toți ceilalți"; }, 4000); return; }
+  b.dataset.sure = "";
+  try {
+    const j = await api("/api/admin/kick", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ all: true }) });
+    toast(j.removed ? `Am scos ${j.removed} ${j.removed === 1 ? "dispozitiv" : "dispozitive"}` : "Nu era nimeni altcineva");
+    b.textContent = "Scoate-i pe toți ceilalți";
+    loadSessions();
+  } catch (err) { if (err.message !== "auth") toast(err.message); }
+};
+$("#setPass").onclick = async () => {
+  const pass = $("#newPass").value;
+  try {
+    const j = await api("/api/admin/password", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass, kick: $("#newPassKick").checked }) });
+    $("#newPass").value = "";
+    toast("Parola s-a schimbat" + (j.removed ? `; am scos ${j.removed} ${j.removed === 1 ? "dispozitiv" : "dispozitive"}` : ""), 3200);
+    loadSessions();
+  } catch (err) { if (err.message !== "auth") toast(err.message); }
+};
+async function checkOwner() {
+  try { const j = await api("/api/me"); S.admin = !!j.admin; } catch { S.admin = false; }
+  $("#ownerBox").hidden = !S.admin;
+}
+
+// ---------- login
+function showLogin() { $("#app").hidden = true; $("#login").hidden = false; setTimeout(() => $("#pass").focus(), 50); }
+$("#loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  $("#loginErr").textContent = "";
+  const r = await fetch("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pass: $("#pass").value, device }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { $("#loginErr").textContent = j.error || "Nu merge."; return; }
+  $("#pass").value = "";
+  start();
+};
+
+// ---------- things shared from Android's Share menu (the service worker parks them in a cache)
+async function pickupShared() {
+  if (!("caches" in window)) return;
+  const c = await caches.open("dripbox-share");
+  const keys = await c.keys();
+  if (!keys.length) return;
+  const files = [];
+  let text = "";
+  for (const k of keys) {
+    const r = await c.match(k);
+    if (k.url.endsWith("/_share/text")) text = (await r.text()).trim();
+    else {
+      const b = await r.blob();
+      files.push(new File([b], decodeURIComponent(r.headers.get("x-name") || "fisier"), { type: r.headers.get("content-type") || "" }));
+    }
+    await c.delete(k);
+  }
+  // shared files arrive as one message: the files, with any link as the caption of the first
+  if (files.length) uploadAll(files, text);
+  else if (text) await api("/api/text", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, from: device }) }).then((x) => S.mine.add(x.id));
+  refresh();
+}
+
+async function start() {
+  $("#login").hidden = true;
+  $("#app").hidden = false;
+  await refresh();
+  if (!$("#app").hidden) {
+    checkOwner();
+    if (location.search) history.replaceState(null, "", "/");
+    pickupShared().catch((e) => toast(e.message));
+  }
+}
+// updates: when a new version is published, the app picks it up by itself and reloads once nothing is being sent
+if ("serviceWorker" in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("/sw.js").then((reg) => {
+    const check = () => reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+    setInterval(check, 30 * 60e3);
+  }).catch(() => {});
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading || !hadController) return;
+    const go = () => {
+      if (tray.length || $("#jobs").children.length || msg.value.trim()) return setTimeout(go, 3000);
+      reloading = true;
+      location.reload();
+    };
+    go();
+  });
+}
+start();
+</script>
+</body>
+</html>
