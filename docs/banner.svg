@@ -10,5 +10,5 @@
   </g>
   <g transform="translate(88 93) scale(5.6)" fill="none" stroke="#4d8dff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.9" y="2.9" width="18.2" height="18.2" rx="4.6"/><path d="M12 6.4c2.6 3.1 4.15 5.25 4.15 7.2a4.15 4.15 0 0 1-8.3 0c0-1.95 1.55-4.1 4.15-7.2z"/></g>
   <text x="270" y="170" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="84" font-weight="800" letter-spacing="-2" fill="#4d8dff">Dripbox</text>
-  <text x="272" y="226" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="30" font-weight="500" fill="#c9d6f2">AirDrop-ul tău privat, pe contul tău Cloudflare.</text>
+  <text x="272" y="226" font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="30" font-weight="500" fill="#c9d6f2">Your private AirDrop, on your own Cloudflare.</text>
 </svg>
